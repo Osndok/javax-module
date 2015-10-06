@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.lang.reflect.Array;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.HashSet;
@@ -502,13 +503,28 @@ class Convert
 	public static <T>
 	T objectToInterface(Object o, Class<T> iface)
 	{
+		//Out first choice is always a native implementation!
 		if (iface.isInstance(o))
 		{
 			return (T)o;
 		}
 
+		final
+		InvocationHandler invocationHandler;
+		{
+			if (o instanceof InvocationHandler)
+			{
+				//Our second choice is dispatch-aware objects.
+				invocationHandler=(InvocationHandler)o;
+			}
+			else
+			{
+				//Otherwise, we have some mapping to do...
+				invocationHandler=new InterfaceCoercion(o, iface);
+			}
+		}
+
 		//TODO: verify correctness of classloader choice... we presume the loader of the interface can see the object's loader.
-		//TODO: check to see if it would be faster to cache the Method lookups or factor-out (and cache) the class-specific data.
-		return (T)Proxy.newProxyInstance(iface.getClassLoader(), new Class[]{iface}, new InterfaceCoercion(o, iface));
+		return (T)Proxy.newProxyInstance(iface.getClassLoader(), new Class[]{iface}, invocationHandler);
 	}
 }
