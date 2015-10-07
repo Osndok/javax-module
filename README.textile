@@ -1,0 +1,9 @@
+
+h1. Java Module System
+
+Documentation & notes on the goals and how to use this software are currently unavailable.
+
+However, the complementary components, such as the WAR/JAR grinder and RPM packager, are now in a separate project:
+
+https://github.com/Osndok/maven-rpm-bridge
+
