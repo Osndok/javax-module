@@ -75,7 +75,7 @@ class Convert
 	Object stringToBasicObject(String stringValue, Class targetType, Object[] contextArrayOrNull)
 	{
 		//TODO: primitive types cannot be null, can probably give a much better message therefor.
-		if (stringValue.equals("null")) return null;
+		if (stringValue==null || stringValue.equals("null")) return null;
 
 		if (targetType == String.class) return stringValue;
 
