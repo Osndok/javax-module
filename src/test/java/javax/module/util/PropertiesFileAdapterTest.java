@@ -78,5 +78,28 @@ class PropertiesFileAdapterTest
 		Boolean getBoolean();
 		Boolean getDNE();
 		String getDefault();
+		PropEnum getEnumValue();
+		PropEnum getEnumDNE();
+	}
+
+	enum PropEnum
+	{
+		VALUE1,
+		VALUE2,
+		VALUE3
+	}
+
+	@Test
+	public
+	void testEnumUsage() throws Exception
+	{
+		final
+		Object o = new PropertiesFileAdapter(TEST_FILE);
+
+		final
+		FromTheFile fromFile = Convert.objectToInterface(o, FromTheFile.class);
+
+		assertEquals(fromFile.getEnumValue(), PropEnum.VALUE2);
+		assertNull(fromFile.getEnumDNE());
 	}
 }
