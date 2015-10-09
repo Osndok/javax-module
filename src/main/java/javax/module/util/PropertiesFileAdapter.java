@@ -58,6 +58,7 @@ class PropertiesFileAdapter extends AbstractPropertiesAdapter
 				{
 					lastReadModTime = startModTime;
 					currentValues = propertiesReadFromFile;
+					cache.clear();
 				}
 				else
 				{
@@ -92,6 +93,13 @@ class PropertiesFileAdapter extends AbstractPropertiesAdapter
 		{
 			return currentValue;
 		}
+	}
+
+	@Override
+	protected
+	boolean isCacheValid()
+	{
+		return (file.lastModified() == lastReadModTime);
 	}
 
 	private
