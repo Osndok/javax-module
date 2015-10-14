@@ -1,5 +1,6 @@
 package javax.module;
 
+import javax.module.impl.InterfaceGatewayFactory;
 import javax.module.util.Dependency;
 import javax.module.util.ModuleKey;
 import java.io.ByteArrayOutputStream;
@@ -638,6 +639,27 @@ class ModuleLoader extends ClassLoader
 	String toString()
 	{
 		return super.toString()+":"+getModuleKey();
+	}
+
+	/**
+	 * The InterfaceGateway mechanism is the easiest way to have a 3rd-party module
+	 * (i.e. not this module or any it was built to depend on) to have a functional
+	 * effect on the executable code paths.
+	 *
+	 * The actual/concrete implementation of this is left open to interpretation,
+	 * the only "requirement" is that the calling module not need to "know" what
+	 * the switchboard implementation actually is (i.e. no dependency link).
+	 *
+	 * The default/current implementation only provides resolution within the JVM,
+	 * but this same mechanism is envisioned to be system-wide, and module-specific,
+	 * if needed.
+	 *
+	 * @return
+	 */
+	public
+	InterfaceGateway getInterfaceGateway()
+	{
+		return InterfaceGatewayFactory.getInstance().getInterfaceGateway(getModuleKey());
 	}
 }
 
