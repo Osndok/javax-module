@@ -524,6 +524,8 @@ class Convert
 			}
 		}
 
+		//System.err.println("InvocationHandler="+invocationHandler);
+
 		//TODO: verify correctness of classloader choice... we presume the loader of the interface can see the object's loader.
 		return (T)Proxy.newProxyInstance(iface.getClassLoader(), new Class[]{iface}, invocationHandler);
 	}
