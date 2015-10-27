@@ -48,7 +48,7 @@ class AbstractPropertiesAdapter implements InvocationHandler
 		String methodName = method.getName();
 
 		final
-		Object[] context = new Object[]{contextBit, ": ", methodName};
+		Object[] context = new Object[]{contextBit, ": ", methodName+"()"};
 
 		final
 		boolean readMode;

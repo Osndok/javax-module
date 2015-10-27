@@ -95,11 +95,22 @@ class Convert
 			}
 		}
 
-		if (targetType==short   .class || targetType==Short    .class) return new Short(stringValue);
-		if (targetType==int     .class || targetType==Integer  .class) return new Integer(stringValue);
-		if (targetType==long    .class || targetType==Long     .class) return new Long(stringValue);
-		if (targetType==float   .class || targetType==Float    .class) return new Float(stringValue);
-		if (targetType==double  .class || targetType==Double   .class) return new Double(stringValue);
+		try
+		{
+			if (targetType == short .class || targetType == Short  .class) return new Short(stringValue);
+			if (targetType == int   .class || targetType == Integer.class) return new Integer(stringValue);
+			if (targetType == long  .class || targetType == Long   .class) return new Long(stringValue);
+			if (targetType == float .class || targetType == Float  .class) return new Float(stringValue);
+			if (targetType == double.class || targetType == Double .class) return new Double(stringValue);
+		}
+		catch (NumberFormatException e)
+		{
+			final
+			String context=getContextFrom(contextArrayOrNull);
+
+			throw new NumberFormatException(context+": unable to convert '"+stringValue+"' to "+aOrAn(targetType));
+		}
+
 		if (targetType==boolean .class || targetType==Boolean  .class) return stringToBooleanObject(stringValue);
 
 		if (targetType==char    .class || targetType==Character.class)
@@ -245,6 +256,19 @@ class Convert
 		}
 
 		throw new UnsupportedOperationException(targetType+" constructor parameters are not supported");
+	}
+
+	private static
+	String aOrAn(Class aClass)
+	{
+		if (aClass == int.class || aClass == Integer.class)
+		{
+			return "an "+aClass.getSimpleName();
+		}
+		else
+		{
+			return "a "+aClass.getSimpleName();
+		}
 	}
 
 	private static

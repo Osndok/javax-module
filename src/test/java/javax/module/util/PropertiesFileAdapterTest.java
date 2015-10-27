@@ -102,4 +102,32 @@ class PropertiesFileAdapterTest
 		assertEquals(fromFile.getEnumValue(), PropEnum.VALUE2);
 		assertNull(fromFile.getEnumDNE());
 	}
+
+	@Test
+	public
+	void testBadStringParsingFormat() throws Exception
+	{
+		final
+		Properties defaults = new Properties();
+		{
+			defaults.put("integer", "not-an-integer");
+		}
+
+		final
+		Object o = new PropertiesFileAdapter(new File("/path/to/somewhere/that/does/not/exist/please"), defaults);
+
+		final
+		FromTheFile fromFile = Convert.objectToInterface(o, FromTheFile.class);
+
+		try
+		{
+			Integer integer = fromFile.getInteger();
+			throw new AssertionError();
+		}
+		catch (NumberFormatException e)
+		{
+			System.err.println("good: "+e);
+			assertTrue(e.getMessage().contains("getInteger()"));
+		}
+	}
 }
