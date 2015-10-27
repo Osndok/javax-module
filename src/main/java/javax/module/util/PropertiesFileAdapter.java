@@ -143,4 +143,11 @@ class PropertiesFileAdapter extends AbstractPropertiesAdapter
 
 		return lowerCased;
 	}
+
+	@Override
+	protected
+	String getDiagnosticIdentifier()
+	{
+		return "properties file: "+file;
+	}
 }

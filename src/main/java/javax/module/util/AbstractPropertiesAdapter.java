@@ -1,9 +1,11 @@
 package javax.module.util;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.MissingResourceException;
 import java.util.Properties;
 
 /**
@@ -86,14 +88,21 @@ class AbstractPropertiesAdapter implements InvocationHandler
 			String key=propertyName.toLowerCase();
 
 			//All the string parsing can be expensive if an interface is used repeatedly... cache the introspection.
+			//NB: we must cache intentionally-null property values too.
+			if (isCacheValid() && cache.containsKey(key))
 			{
-				final
-				Object cacheHit=cache.get(key);
+				/*
+				BUG?: looks like we traded caching-nulls to a race condition... but there is a bigger 'race' below,
+				and I don't think we are too concerned with thread-safety at the moment.
+				 */
+				return cache.get(key);
 
+				/*
 				if (cacheHit!=null && isCacheValid())
 				{
 					return cacheHit;
 				}
+				*/
 			}
 
 			//TODO: check for void return type? what would that even mean?!
@@ -103,10 +112,20 @@ class AbstractPropertiesAdapter implements InvocationHandler
 			final
 			String stringValue = getPropertyForLowerCaseKey(key);
 
-			//System.err.println(String.format("get(%s) -> %s", propertyName, stringValue));
-			if (returnType.isPrimitive() && stringValue==null)
+			if (stringValue==null)
 			{
-				throw new IllegalStateException(propertyName+" cannot be null/empty/missing due to primitive return type");
+				//System.err.println(String.format("get(%s) -> %s", propertyName, stringValue));
+				if (returnType.isPrimitive())
+				{
+					throw new IllegalStateException(propertyName + " cannot be null/empty/missing due to primitive return type");
+				}
+
+				if (methodIsMarkedWithNotNullAnnotation(method))
+				{
+					throw new MissingResourceException("no property value for key (in "+getDiagnosticIdentifier()+"): "+key,
+														  method.getDeclaringClass().toString(),
+														  key);
+				}
 			}
 
 			final
@@ -122,11 +141,57 @@ class AbstractPropertiesAdapter implements InvocationHandler
 		}
 	}
 
+	private
+	boolean methodIsMarkedWithNotNullAnnotation(Method method)
+	{
+		Boolean hasNotNullAnnotation=methodAnnotationCache.get(method);
+
+		if (hasNotNullAnnotation==null)
+		{
+			hasNotNullAnnotation=reflectOnPresenceOfNotNullAnnotation(method);
+			methodAnnotationCache.put(method, hasNotNullAnnotation);
+		}
+
+		return hasNotNullAnnotation;
+	}
+
+	private
+	boolean reflectOnPresenceOfNotNullAnnotation(Method method)
+	{
+		for (Annotation annotation : method.getAnnotations())
+		{
+			final
+			Class aClass = annotation.annotationType();
+
+			final
+			String name = aClass.getSimpleName().toLowerCase();
+
+			if (name.startsWith("notnull") || name.startsWith("nonnull") || name.startsWith("required"))
+			{
+				return true;
+			}
+
+			if (name.contains("nullable") || name.contains("optional"))
+			{
+				return false;
+			}
+		}
+
+		return false;
+	}
+
 	protected final
 	Map<String, Object> cache = new HashMap<String, Object>();
 
+	protected final
+	Map<Method, Boolean> methodAnnotationCache = new HashMap<Method, Boolean>();
+
 	protected abstract
 	String getPropertyForLowerCaseKey(String key);
+
+	//Kinda the same as 'contextBit'?
+	protected abstract
+	String getDiagnosticIdentifier();
 
 	protected abstract
 	boolean isCacheValid();

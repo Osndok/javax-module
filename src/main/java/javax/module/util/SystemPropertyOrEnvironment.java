@@ -1,24 +1,24 @@
 package javax.module.util;
 
+import java.util.Map;
+import java.util.Properties;
+
 /**
  * Created by robert on 4/8/15.
  */
 public
-class SystemPropertyOrEnvironment
+class SystemPropertyOrEnvironment extends AbstractPropertiesAdapter
 {
-	private
-	SystemPropertyOrEnvironment()
-	{
-		throw new UnsupportedOperationException();
-	}
+	private static final
+	String DIAGNOSTIC_MESSAGE = "system properties and environment variables";
 
 	public static
 	String get(String key)
 	{
 		final
-		String prop=System.getProperty(key);
+		String prop = System.getProperty(key);
 
-		if (prop==null)
+		if (prop == null)
 		{
 			return System.getenv(key);
 		}
@@ -78,4 +78,57 @@ class SystemPropertyOrEnvironment
 		}
 	}
 
+	public
+	SystemPropertyOrEnvironment()
+	{
+		super(DIAGNOSTIC_MESSAGE, null);
+	}
+
+	public
+	SystemPropertyOrEnvironment(Properties mixedCaseDefaults)
+	{
+		super(DIAGNOSTIC_MESSAGE, mixedCaseDefaults);
+	}
+
+	@Override
+	protected
+	String getPropertyForLowerCaseKey(String desiredLowerCaseKey)
+	{
+		//(1) Check system properties.
+		for (String key : System.getProperties().stringPropertyNames())
+		{
+			if (desiredLowerCaseKey.equalsIgnoreCase(key))
+			{
+				return System.getProperty(key);
+			}
+		}
+
+		//(2) Check environment variables.
+		for (Map.Entry<String, String> me : System.getenv().entrySet())
+		{
+			final
+			String key=me.getKey();
+
+			if (desiredLowerCaseKey.equalsIgnoreCase(key))
+			{
+				return me.getValue();
+			}
+		}
+
+		return null;
+	}
+
+	@Override
+	protected
+	String getDiagnosticIdentifier()
+	{
+		return DIAGNOSTIC_MESSAGE;
+	}
+
+	@Override
+	protected
+	boolean isCacheValid()
+	{
+		return true;
+	}
 }
