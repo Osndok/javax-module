@@ -29,7 +29,7 @@ class PropertiesFileAdapterTest
 		FromTheFile fromFile = Convert.objectToInterface(o, FromTheFile.class);
 
 		assertEquals(fromFile.getAlpha(), "The first letter of the greek alphabet");
-		assertEquals(fromFile.integer(), 123);
+		assertEquals(fromFile.integerPrimitive(), 123);
 		assertEquals(fromFile.getInteger(), new Integer(123));
 		assertEquals(fromFile.getBoolean(), Boolean.TRUE);
 		assertNull(fromFile.getDNE());
@@ -60,7 +60,7 @@ class PropertiesFileAdapterTest
 
 		try
 		{
-			fromFile.integer();
+			fromFile.integerPrimitive();
 			throw new AssertionError();
 		}
 		catch (IllegalStateException e)
@@ -73,7 +73,7 @@ class PropertiesFileAdapterTest
 	interface FromTheFile
 	{
 		String getAlpha();
-		int integer();
+		int integerPrimitive();
 		Integer getInteger();
 		Boolean getBoolean();
 		Boolean getDNE();

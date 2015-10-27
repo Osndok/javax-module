@@ -9,6 +9,7 @@ import java.io.FileReader;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -124,14 +125,25 @@ class Convert
 
 		if (targetType==byte[]  .class)
 		{
-			if (stringValue.startsWith("0x"))
+			if (stringValue.startsWith("0x") || stringValue.startsWith("0X"))
 			{
 				stringValue=stringValue.substring(2);
+				System.err.println("hex string to bytes: "+stringValue);
+				System.err.flush();
+				return hexStringToByteArray(stringValue);
 			}
-
-			//BigInteger drops leading zeros...
-			//return new BigInteger(stringValue, 16).toByteArray();
-			return hexStringToByteArray(stringValue);
+			else
+			{
+				try
+				{
+					return stringValue.getBytes("UTF-8");
+				}
+				catch (UnsupportedEncodingException e)
+				{
+					e.printStackTrace();
+					return stringValue.getBytes();
+				}
+			}
 		}
 
 		if (targetType==File.class)
@@ -270,11 +282,34 @@ class Convert
 			len++;
 		}
 
+		final
 		byte[] data = new byte[len / 2];
-		for (int i = 0; i < len; i += 2) {
-			data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
-									  + Character.digit(s.charAt(i+1), 16));
+
+		for (int i = 0; i < len; i += 2)
+		{
+			final
+			char c1=s.charAt(i);
+
+			final
+			char c2=s.charAt(i+1);
+
+			final
+			int d1 = Character.digit(c1, 16) << 4;
+
+			final
+			int d2 = Character.digit(c2, 16) & 0x0f;
+
+			final
+			byte b=(byte) (d1 | d2);
+
+			/*
+			System.err.println("hex->byte: "+c1+" "+c2+" "+d1+" "+d2+" "+b);
+			System.err.flush();
+			*/
+
+			data[i / 2] = b;
 		}
+
 		return data;
 	}
 
@@ -430,10 +465,16 @@ class Convert
 	public static
 	Object stringToArray(String s, Class parameterType, Object[] context)
 	{
+		//FIXED: regression... byte array handling is 'special'... or... "originally handled before arrays"?
+		if (parameterType.equals(byte[].class))
+		{
+			return stringToBasicObject(s, parameterType, context);
+		}
+
 		//NB: CSV seems to be the most common for command-line flags
 		//NB: ...but this is *also* called for each array argument.
 		//e.g. "do-something --with=a,b,c --but-not=d,e,f other arguments here"
-		//TODO: support "literal" arrays, like "[a,b,c]", or a better parsing mechanic.
+		//TODO: support "literal" arrays, like "['a','b','c']", or a better parsing mechanic (JSON?).
 		final
 		String[] args = s.split(",");
 

@@ -91,11 +91,17 @@ class AbstractPropertiesAdapter implements InvocationHandler
 			//NB: we must cache intentionally-null property values too.
 			if (isCacheValid() && cache.containsKey(key))
 			{
+				final
+				Object cacheHit=cache.get(key);
+
+				//Yes... it is an edge case to be sure, but the unit test were hitting it, so someone else might too.
+				checkNullSuitability(cacheHit, method, key);
+
 				/*
 				BUG?: looks like we traded caching-nulls to a race condition... but there is a bigger 'race' below,
 				and I don't think we are too concerned with thread-safety at the moment.
 				 */
-				return cache.get(key);
+				return cacheHit;
 
 				/*
 				if (cacheHit!=null && isCacheValid())
@@ -111,21 +117,8 @@ class AbstractPropertiesAdapter implements InvocationHandler
 
 			final
 			String stringValue = getPropertyForLowerCaseKey(key);
-
-			if (stringValue==null)
 			{
-				//System.err.println(String.format("get(%s) -> %s", propertyName, stringValue));
-				if (returnType.isPrimitive())
-				{
-					throw new IllegalStateException(propertyName + " cannot be null/empty/missing due to primitive return type");
-				}
-
-				if (methodIsMarkedWithNotNullAnnotation(method))
-				{
-					throw new MissingResourceException("no property value for key (in "+getDiagnosticIdentifier()+"): "+key,
-														  method.getDeclaringClass().toString(),
-														  key);
-				}
+				checkNullSuitability(stringValue, method, key);
 			}
 
 			final
@@ -138,6 +131,26 @@ class AbstractPropertiesAdapter implements InvocationHandler
 		else
 		{
 			throw new UnsupportedOperationException("write methods are not yet implemented (in this version)");
+		}
+	}
+
+	private
+	void checkNullSuitability(Object stringValue, Method method, String key)
+	{
+		if (stringValue==null)
+		{
+			//System.err.println(String.format("get(%s) -> %s", propertyName, stringValue));
+			if (method.getReturnType().isPrimitive())
+			{
+				throw new IllegalStateException(method.getName() + " cannot be null/empty/missing due to primitive return type");
+			}
+
+			if (methodIsMarkedWithNotNullAnnotation(method))
+			{
+				throw new MissingResourceException("no property value for key (in "+getDiagnosticIdentifier()+"): "+method.getName(),
+													  method.getDeclaringClass().toString(),
+													  key);
+			}
 		}
 	}
 

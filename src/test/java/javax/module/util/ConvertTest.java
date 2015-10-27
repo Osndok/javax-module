@@ -33,6 +33,31 @@ class ConvertTest
 
 	@Test
 	public
+	void testStringToByteArray() throws Exception
+	{
+		final
+		Class<byte[]> aClass = byte[].class;
+
+		assertEquals((byte[])Convert.stringToBasicObject("0x0", aClass, null), new byte[]{0});
+		assertEquals((byte[])Convert.stringToBasicObject("0x1", aClass, null), new byte[]{1});
+		assertEquals((byte[])Convert.stringToBasicObject("0x10", aClass, null), new byte[]{0x10});
+		assertEquals((byte[])Convert.stringToBasicObject("0x123456", aClass, null), new byte[]{0x12,0x34,0x56});
+
+		assertEquals((byte[])Convert.stringToArray("0x0", aClass, null), new byte[]{0});
+		assertEquals((byte[])Convert.stringToArray("0x1", aClass, null), new byte[]{1});
+		assertEquals((byte[])Convert.stringToArray("0x10", aClass, null), new byte[]{0x10});
+		assertEquals((byte[])Convert.stringToArray("0x123456", aClass, null), new byte[]{0x12,0x34,0x56});
+
+		/*
+		http://www.asciitohex.com/
+		https://www.branah.com/ascii-converter
+		 */
+		assertEquals((byte[])Convert.stringToBasicObject("Hello, World!", aClass, null), new byte[]{72,101,108,108,111,44,32,87,111,114,108,100,33});
+		assertEquals((byte[])Convert.stringToArray("Hello, World!", aClass, null), new byte[]{72,101,108,108,111,44,32,87,111,114,108,100,33});
+	}
+
+	@Test
+	public
 	void testStringToBooleanObject() throws Exception
 	{
 

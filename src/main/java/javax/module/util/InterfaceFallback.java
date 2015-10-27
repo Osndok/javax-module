@@ -1,6 +1,7 @@
 package javax.module.util;
 
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 /**
@@ -48,6 +49,10 @@ class InterfaceFallback <T> implements InvocationHandler
 				method.invoke(primary, objects);
 				return null;
 			}
+			catch (InvocationTargetException e)
+			{
+				handle(e.getTargetException());
+			}
 			catch (Throwable t2)
 			{
 				handle(t2);
@@ -65,6 +70,10 @@ class InterfaceFallback <T> implements InvocationHandler
 			try
 			{
 				retval=method.invoke(primary, objects);
+			}
+			catch (InvocationTargetException e)
+			{
+				handle(e.getTargetException());
 			}
 			catch (Throwable t2)
 			{
