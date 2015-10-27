@@ -88,7 +88,9 @@ class ModuleLoader extends ClassLoader
 	 */
 	Class findClassInThisModule(String name) throws IOException
 	{
+		final
 		Class retval = findLoadedClass(name);
+
 		if (retval != null)
 		{
 			if (DEBUG)
@@ -98,9 +100,13 @@ class ModuleLoader extends ClassLoader
 			return retval;
 		}
 
+		final
 		String className = name.replace('.', '/') + ".class";
+
 		//@bug: surely this is far from optimal?
+		final
 		InputStream is = module.getClassAsStream(className);
+
 		if (is == null)
 		{
 			if (DEBUG)
@@ -109,12 +115,50 @@ class ModuleLoader extends ClassLoader
 			}
 			return null;
 		}
+
 		if (DEBUG)
 		{
 			System.err.println(name + ":\tCREATE [ " + context + " :: " + getModuleKey() + " ]");
 		}
+
+		final
 		byte[] bs = getBytes(is);
+
+		maybeDefinePackage(name);
+
 		return defineClass(name, bs, 0, bs.length);
+	}
+
+	private
+	void maybeDefinePackage(String className)
+	{
+		final
+		int lastPeriod=className.lastIndexOf('.');
+
+		if (lastPeriod>0)
+		{
+			final
+			String packageName = className.substring(0, lastPeriod);
+
+			final
+			Package aPackage = getPackage(packageName);
+
+			if (aPackage==null)
+			{
+				final
+				ModuleKey moduleKey=getModuleKey();
+
+				String specTitle=null;
+				String specVersion=null;
+				String specVendor=null;
+				String implTitle=moduleKey.getModuleName();
+				String implVersion=moduleKey.getMajorVersion()+"."+moduleKey.getMinorVersion(); //TODO: FIX ME (nulls).
+				String implVendor=null;
+				URL sealBase=null;
+
+				definePackage(packageName, specTitle, specVersion, specVendor, implTitle, implVersion, implVendor, sealBase);
+			}
+		}
 	}
 
 	/**
@@ -558,19 +602,30 @@ class ModuleLoader extends ClassLoader
 		return module.getResourceAsURL(name);
 	}
 
+	/**
+	 * TODO: please explain this, it is not immediately obvious here.
+	 */
 	Class getDirectClassProxy(String directName, Class orig) throws IOException
 	{
 		synchronized (this)
 		{
+			final
 			Class c = findLoadedClass(directName);
+
 			if (c != null)
 			{
 				return c;
 			}
+
+			final
 			ModuleNameStrippingByteCodeClassExtender se = new ModuleNameStrippingByteCodeClassExtender(orig.getName(), directName);
+
+			final
 			byte[] bs = se.getClassData();
-			c = defineClass(directName, bs, 0, bs.length);
-			return c;
+
+			maybeDefinePackage(directName);
+
+			return defineClass(directName, bs, 0, bs.length);
 		}
 	}
 
