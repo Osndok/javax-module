@@ -2,6 +2,8 @@ package javax.module.util;
 
 import javax.module.CommandLineOption;
 import javax.module.NoCommandLineUtility;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
@@ -429,7 +431,7 @@ class FuzzyEntryPoint
 					e.getCause().printStackTrace();
 					System.exit(1);
 				}
-				catch (IllegalAccessException e)
+				catch (Exception e)
 				{
 					e.printStackTrace();
 					System.exit(1);
@@ -464,7 +466,7 @@ class FuzzyEntryPoint
 					e.getCause().printStackTrace();
 					System.exit(1);
 				}
-				catch (IllegalAccessException e)
+				catch (Exception e)
 				{
 					e.printStackTrace();
 					System.exit(1);
@@ -597,11 +599,29 @@ class FuzzyEntryPoint
 	}
 
 	private
-	void printResult(Object o)
+	void printResult(Object o) throws IOException
 	{
+		if (o==Void.class)
+		{
+			//This is one way of telling FuzzyEntryPoint to NOT print any result.
+		}
+		else
 		if (o==null)
 		{
 			System.out.println("null");
+		}
+		else
+		if (o instanceof InputStream)
+		{
+			final
+			InputStream in=(InputStream)o;
+
+			int i;
+
+			while ((i=in.read())>0)
+			{
+				System.out.print((char)i);
+			}
 		}
 		else
 		if (o instanceof Iterable)
@@ -654,6 +674,13 @@ class FuzzyEntryPoint
 		if (o == null)
 		{
 			return true;
+		}
+
+		//Returning Void.class is one way to tell the interpreter to... "take a hike".
+		//Useful when you ordinarily would return null, but don't want to trigger a EXIT_STATUS_FAILURE
+		if (o == Void.class)
+		{
+			return false;
 		}
 
 		if (o instanceof Boolean)
@@ -1455,7 +1482,7 @@ class FuzzyEntryPoint
 		}
 
 		public
-		void invoke(Object target) throws InvocationTargetException, IllegalAccessException
+		void invoke(Object target) throws InvocationTargetException, IllegalAccessException, IOException
 		{
 			Object result = method.invoke(target, parameters);
 
